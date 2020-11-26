@@ -216,23 +216,103 @@ Setting DHCP server **(TUBAN)** agar *subnet 1* mendapatkan peminjaman alamat IP
 
 ### Soal 7
 Setting agar akses Proxy server **(MOJOKERTO)** memerlukan autentikasi dengan user: userta_t03 dan password: inipassw0rdta_t03
+  - Install proxy  squid dengan menggunakan command `apt-get install squid`
+  - Cek status squid dengan command `service squid status`
+  - Edit file `/etc/squid/squid.conf` dan tambahkan
+  ```
+  http_port 8080
+  visible_hostname mojokerto
+
+  http_Access allow all
+  ```
+  - Jalankan `service squid restart` untuk menjalankan squid
+  - Lakukan command `htpasswd -c /etc/squid/passwd [ nama user]` dan masukkan passwordnya 
   ![](/img/7-1.jpg)
+  
+  - Edit file `/etc/squid/squid.conf` dan tambahkan
+  ```
+  http_port 8080
+  visible_hostname mojokerto
+
+  auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+  auth_param basic children 5
+  auth_param basic realm Proxy
+  auth_param basic credentialsttl 2 hours
+  auth_param basic casesensitive on
+  acl USERS proxy_auth REQUIRED
+  http_access allow USERS
+  ```
   ![](/img/7-2.jpg)
+  
+  - Jalankan `service squid restart` untuk menjalankan squid
+  - Aktifkan proxy melalui private browser, dan lakukan setting proxy
+  ![](/img/proxy.jpg)
+  
+  - Masukkan nama username dan password
   ![](/img/7-3.jpg)
+  
+  - Proxy berhasil dojalankan dengan cara membuka sebuah laman
   ![](/img/7-4.jpg)
 
 ### Soal 8
 Setting agar Proxy server **(MOJOKERTO)** hanya dapat diakses pada hari Selasa-Rabu pukul 13.00-18.00.
+  - Buat file baru `/etc/squid/acl.conf` dan tambahkan waktu sesuai ketentuan, yaitu:
+    - MTWHF adalah hari-hari dimana user diperbolehkan menggunakan proxy. (S: Sunday, M: Monday, T: Tuesday, W: Wednesday, H: Thursday, F: Friday, A: Saturday)
+    - Penulisan jam menggunakan format: h1:m1-h2:m2. Dengan syarat h1<h2 dan m1<m2
+  ```
+  acl AVAILABLE_WORKING1 time TW 13:00-18:00
+  ```
   ![](/img/8-1.jpg)
+  
+  - Edit file `/etc/squid/squid.conf` dan tambahkan
+  ```
+  http_port 8080
+  visible_hostname mojokerto
+  
+  include /etc/squid/acl.conf
+  http_access allow AVAILABLE_WORKING1
+  ```
+  - Jalankan `service squid restart` untuk menjalankan squid
 
 ### Soal 9
 Setting agar Proxy server **(MOJOKERTO)** hanya dapat diakses pada hari Selasa-Kamis pukul 21.00-09.00 keesokan harinya.
+  - Edit file `/etc/squid/acl.conf` dan tambahkan ketentuan baru 
+  ```
+  acl AVAILABLE_WORKING2_1 time TWH 21:00-24:00
+  acl AVAILABLE_WORKING2_2 time WHF 00:00-09:00
+  ```
   ![](/img/9-1.jpg)
+  
+  - Edit file `/etc/squid/squid.conf` dan tambahkan
+  ```
+  http_port 8080
+  visible_hostname mojokerto
+  
+  include /etc/squid/acl.conf
+  http_access allow AVAILABLE_WORKING1
+  http_access allow AVAILABLE_WORKING2_1
+  http_access allow AVAILABLE_WORKING2_2
+  ```
+  - Jalankan `service squid restart` untuk menjalankan squid
 
 ### Soal 10
 Setting Proxy server **(MOJOKERTO)** agar ketika mengakses google.com, maka akan diredirect menuju monta.if.its.ac.id.
+  - Edit file `/etc/squid/squid.conf` dan tambahkan
+  ```
+  http_port 8080
+  visible_hostname mojokerto
+
+  acl BLACKLIST dstdomain google.com               //akan mem-block situs google.com
+  deny_info http://monta.if.its.ac.id/ BLACKLIST   //situs yang di-block akan di direct ke situs monta.if
+  http_reply_access deny BLACKLIST
+  ```
   ![](/img/10-1.jpg)
+  
+  - Jalankan `service squid restart` untuk menjalankan squid
+  - Buka private browser dengan proxy yang sudah dijalankan, lalu tes dengan membuka google.com  
   ![](/img/10-2.jpg)
+  
+  - Situs google langsung otomatis berpindah ke situs monta.if.its.ac.id
   ![](/img/10-3.jpg)
   
 ### Soal 11
